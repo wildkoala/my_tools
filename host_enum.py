@@ -65,8 +65,6 @@ def arp(lines):
 		else:
 			print("   [-] " + l)
 
-	# should i make this do an nmap scan from here?
-	# really I should use ip ad and do a ping sweep
 
 # this only works on /24 networks and smaller
 def ip_addr(lines):
@@ -76,7 +74,7 @@ def ip_addr(lines):
 	for ip in ips:
 		print("   [-] " + ip)
 		print("       [*] Scan this net with the following command:")
-		#I need this to get the correct start, stop and end
+		
 		net = ipaddress.ip_network(ip, strict=False)
 		first_host = (net.network_address + 1).exploded.split(".")[-1]
 		last_host = (net.broadcast_address - 1).exploded.split(".")[-1]
@@ -104,16 +102,7 @@ def read_home_dir(lines):
 	for l in lines:
 		print("   [-] " + l.strip())
 
-# make output pretty without dirtying up the code...
-# something like this, needs work though.
-'''
-def format_output(data, indent_lvl):
-	if indent_lvl == 1:
-		print("[+] " + data)
-	else:
-		print("   " * indent_lvl + "[-] ", end="")
-		print(data)
-'''
+
 
 if __name__ == "__main__":
 
@@ -128,18 +117,17 @@ if __name__ == "__main__":
 	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 	ssh.connect(host,port,username,password)
 
-
-	cmds = ["whoami", "hostname", "ip addr", "ip neighbors", "ip route", "arp -a", "cat /etc/passwd", "cat /etc/hosts", "ls -la /home/" + username]
+	cmds = ["whoami", "ip addr", "ip neighbors", "ip route", "arp -a", "cat /etc/passwd", "cat /etc/hosts", "ls -la /home/" + username]
 
 
 	for cmd in cmds:
 		stdin, stdout, stderr = ssh.exec_command(cmd)
 		print("[+] " + cmd)
 		lines = stdout.readlines()
-		if cmd == "whoami":
-			whoami(lines)
-		elif cmd == "hostname":
+		if cmd == "hostname":
 			hostname(lines)
+		elif cmd == "whoami":
+			whoami(lines)
 		elif cmd == "ip neighbors":
 			ip_neighbors(lines)
 		elif cmd == "ip addr":
@@ -148,7 +136,7 @@ if __name__ == "__main__":
 			ip_route(lines)
 		elif cmd == "arp -a":
 			arp(lines)
-		elif cmd == "cat /etc/passwd":
+		elif "cat /etc/passwd" in cmd:
 			read_etc_passwd(lines)
 		elif cmd == "cat /etc/hosts":
 			read_etc_hosts(lines)
@@ -156,17 +144,3 @@ if __name__ == "__main__":
 			read_home_dir(lines)
 
 
-	'''
-	whoami()
-	hostname()
-	list_ips()
-
-	ip_route()
-	get_neighbors()
-
-	read_etc_passwd()
-	read_etc_hosts()
-	
-	
-	'''
-	#list_ips()
