@@ -22,32 +22,28 @@ import subprocess
 import re
 import ipaddress
 import nmap
+import paramiko
 
 # displays user and their shell right now
 # should this be more verbose?
 # should i cut out certain default, uninteresting users?
-def read_etc_passwd():
-	pswd = open("/etc/passwd", "r")
-	print("[+] /etc/passwd")
-	for aLine in pswd:
-		fields= aLine.split( ":" )
+
+# I want this to work over an ssh connection so that I use it with proxychains.
+
+
+def read_etc_passwd(lines):
+	for l in lines:
+		fields= l.split( ":" )
 		print("   [-] " + fields[0] + ":" + fields[-1].strip())
-	pswd.close()
+	
 
-def read_etc_hosts():
-	hosts = open("/etc/hosts", "r")
-	print("[+] /etc/hosts")
-	for l in hosts:
+def read_etc_hosts(lines):
+	for l in lines:
 		print("   [-] " + l.strip())
-	hosts.close()
+	
 
 
-def get_neighbors():
-	# ip neighbors
-
-	print("[+] ip neighbor")
-	output = subprocess.check_output(["ip", "neighbor"])
-	lines = output.decode().strip().split("\n")
+def ip_neighbors(lines):
 	for l in lines:
 		if "FAILED" in l:
 			pass
@@ -57,10 +53,8 @@ def get_neighbors():
 			print("   [-] " + l)
 	
 
-	# arp -a
-	print("[+] arp -a")
-	output = subprocess.check_output(["arp", "-a"])
-	lines = output.decode().strip().split("\n")
+
+def arp(lines):
 	for l in lines:
 		if "incomplete" in l:
 			pass
@@ -73,11 +67,10 @@ def get_neighbors():
 	# really I should use ip ad and do a ping sweep
 
 # this only works on /24 networks and smaller
-def list_ips():
-	output = subprocess.check_output(["ip", "addr"])
-	output = output.decode().strip()
+def ip_addr(lines):
+	line = "".join(lines)
+	output = line.strip()
 	ips = re.findall( r'[0-9]+(?:\.[0-9]+){3}/[0-9]{2}', output )
-	print("[+] ip addresses")
 	for ip in ips:
 		print("   [-] " + ip)
 		print("       [*] Scan this net with the following command:")
@@ -89,40 +82,73 @@ def list_ips():
 		print("          for i in {}..{} ;do (ping -c 1 {}$i | grep \"bytes from\" &) ;done".format(first_host, last_host, network_bits))
 
 
-def whoami():
-	output = (subprocess.check_output(["whoami"]))
-	print("[+] whoami")
-	print("   [-] " + output.decode().strip())
+def whoami(lines):
+	for l in lines:
+		print("   [-] " + l.strip())
 
 
-def hostname():
-	output = subprocess.check_output(["hostname"])
-	print("[+] hostname")
-	print("   [-] " + output.decode().strip())
+def hostname(lines):
+	for l in lines:
+		print("   [-] " + l.strip())
 
-def ip_route():
-	print("[+] ip route")
-	output = subprocess.check_output(["ip", "route"])
-	lines = output.decode().strip().split("\n")
+def ip_route(lines):
 	for l in lines:
 		if "incomplete" in l:
 			pass
 		else:
-			print("   [-] " + l)
+			print("   [-] " + l.strip())
 
 # make output pretty without dirtying up the code...
 # something like this, needs work though.
+'''
 def format_output(data, indent_lvl):
 	if indent_lvl == 1:
 		print("[+] " + data)
 	else:
 		print("   " * indent_lvl + "[-] ", end="")
 		print(data)
-
+'''
 
 if __name__ == "__main__":
 
-	#'''	
+		
+	host = input("Please provide the IP of the host to enumerate:\n> ")
+	port = input("Please provide the port SSH is running on:\n> ")
+	username = input("Please provide the user to authenticate as:\n> ")
+	password = input("Please provide the password for that user:\n> ")
+
+	
+	ssh = paramiko.SSHClient()
+	ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	ssh.connect(host,port,username,password)
+
+
+	cmds = ["whoami", "hostname", "ip addr", "ip neighbors", "ip route", "arp -a", "cat /etc/passwd", "cat /etc/hosts"]
+
+
+	for cmd in cmds:
+		stdin, stdout, stderr = ssh.exec_command(cmd)
+		print("[+] " + cmd)
+		lines = stdout.readlines()
+		if cmd == "whoami":
+			whoami(lines)
+		elif cmd == "hostname":
+			hostname(lines)
+		elif cmd == "ip neighbors":
+			ip_neighbors(lines)
+		elif cmd == "ip addr":
+			ip_addr(lines)
+		elif cmd == "ip route":
+			ip_route(lines)
+		elif cmd == "arp -a":
+			arp(lines)
+		elif cmd == "cat /etc/passwd":
+			read_etc_passwd(lines)
+		elif cmd == "cat /etc/hosts":
+			read_etc_passwd(lines)
+
+
+	'''
 	whoami()
 	hostname()
 	list_ips()
@@ -134,5 +160,5 @@ if __name__ == "__main__":
 	read_etc_hosts()
 	
 	
-	#'''
+	'''
 	#list_ips()
