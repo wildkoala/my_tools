@@ -39,7 +39,9 @@ def read_etc_passwd(lines):
 
 def read_etc_hosts(lines):
 	for l in lines:
-		print("   [-] " + l.strip())
+		ips = re.findall( r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+', l )
+		if ips:
+			print("   [-] " + l.strip())
 	
 
 
@@ -98,6 +100,10 @@ def ip_route(lines):
 		else:
 			print("   [-] " + l.strip())
 
+def read_home_dir(lines):
+	for l in lines:
+		print("   [-] " + l.strip())
+
 # make output pretty without dirtying up the code...
 # something like this, needs work though.
 '''
@@ -112,10 +118,10 @@ def format_output(data, indent_lvl):
 if __name__ == "__main__":
 
 		
-	host = input("Please provide the IP of the host to enumerate:\n> ")
-	port = input("Please provide the port SSH is running on:\n> ")
-	username = input("Please provide the user to authenticate as:\n> ")
-	password = input("Please provide the password for that user:\n> ")
+	host = input("IP to enumerate:\n> ")
+	port = input("Port SSH is running on:\n> ")
+	username = input("Username:\n> ")
+	password = input("Password:\n> ")
 
 	
 	ssh = paramiko.SSHClient()
@@ -123,7 +129,7 @@ if __name__ == "__main__":
 	ssh.connect(host,port,username,password)
 
 
-	cmds = ["whoami", "hostname", "ip addr", "ip neighbors", "ip route", "arp -a", "cat /etc/passwd", "cat /etc/hosts"]
+	cmds = ["whoami", "hostname", "ip addr", "ip neighbors", "ip route", "arp -a", "cat /etc/passwd", "cat /etc/hosts", "ls -la /home/" + username]
 
 
 	for cmd in cmds:
@@ -145,7 +151,9 @@ if __name__ == "__main__":
 		elif cmd == "cat /etc/passwd":
 			read_etc_passwd(lines)
 		elif cmd == "cat /etc/hosts":
-			read_etc_passwd(lines)
+			read_etc_hosts(lines)
+		elif "ls -la /home/" in cmd:
+			read_home_dir(lines)
 
 
 	'''
