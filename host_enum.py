@@ -21,6 +21,7 @@ Purpose:
 import subprocess
 import re
 import ipaddress
+import nmap
 
 # displays user and their shell right now
 # should this be more verbose?
@@ -67,6 +68,7 @@ def get_neighbors():
 	# should i make this do an nmap scan from here?
 	# really I should use ip ad and do a ping sweep
 
+# this only works on /24 networks and smaller
 def list_ips():
 	output = subprocess.check_output(["ip", "addr"])
 	output = output.decode().strip()
@@ -74,23 +76,14 @@ def list_ips():
 	print("[+] ip addresses")
 	for ip in ips:
 		print("   [-] " + ip)
-		# ping that subnet for hosts
-		print("      [+] Looking for hosts on this subnet...")
-
-		print("         [*] sorry, scanning is taking too long atm, will fix later")
-		'''
+		print("       [*] Scan this net with the following command:")
+		#I need this to get the correct start, stop and end
 		net = ipaddress.ip_network(ip, strict=False)
-		for address in net:
-			print("[-] trying " + address.exploded)
-			try:
-				out = subprocess.check_output('ping -c 1 %s' % address.exploded, 
-												stderr=subprocess.STDOUT, shell=True)
-				res = 0   # no exception, exit status must be 0
-				
-			except subprocess.CalledProcessError as e:
-				out = e.output
-				res = e.returncode
-		'''
+		first_host = (net.network_address + 1).exploded.split(".")[-1]
+		last_host = (net.broadcast_address - 1).exploded.split(".")[-1]
+		network_bits = re.findall( r'[0-9]+\.[0-9]+\.[0-9]+\.', (net.broadcast_address - 1).exploded)[0]
+		print("          for i in {}..{} ;do (ping -c 1 {}$i | grep \"bytes from\" &) ;done".format(first_host, last_host, network_bits))
+
 
 def whoami():
 	output = (subprocess.check_output(["whoami"]))
@@ -120,7 +113,7 @@ def format_output(data, indent_lvl):
 
 if __name__ == "__main__":
 
-	#'''	
+	'''	
 	whoami()
 	hostname()
 	list_ips()
@@ -132,5 +125,5 @@ if __name__ == "__main__":
 	read_etc_hosts()
 	
 	
-	#'''
-	#list_ips()
+	'''
+	list_ips()
