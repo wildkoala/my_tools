@@ -51,6 +51,8 @@ def get_neighbors():
 	for l in lines:
 		if "FAILED" in l:
 			pass
+		elif "STALE" in l:
+			pass
 		else:
 			print("   [-] " + l)
 	
@@ -61,6 +63,8 @@ def get_neighbors():
 	lines = output.decode().strip().split("\n")
 	for l in lines:
 		if "incomplete" in l:
+			pass
+		elif "?" in l:
 			pass
 		else:
 			print("   [-] " + l)
@@ -97,9 +101,14 @@ def hostname():
 	print("   [-] " + output.decode().strip())
 
 def ip_route():
-	output = subprocess.check_output(["ip", "route"])
 	print("[+] ip route")
-	print("   [-] " + output.decode().strip())
+	output = subprocess.check_output(["ip", "route"])
+	lines = output.decode().strip().split("\n")
+	for l in lines:
+		if "incomplete" in l:
+			pass
+		else:
+			print("   [-] " + l)
 
 # make output pretty without dirtying up the code...
 # something like this, needs work though.
@@ -113,7 +122,7 @@ def format_output(data, indent_lvl):
 
 if __name__ == "__main__":
 
-	'''	
+	#'''	
 	whoami()
 	hostname()
 	list_ips()
@@ -125,5 +134,5 @@ if __name__ == "__main__":
 	read_etc_hosts()
 	
 	
-	'''
-	list_ips()
+	#'''
+	#list_ips()
