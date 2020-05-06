@@ -18,10 +18,9 @@ Purpose:
     less than that.
 '''
 
-import subprocess
+
 import re
 import ipaddress
-import nmap
 import paramiko
 
 # displays user and their shell right now
@@ -79,7 +78,7 @@ def ip_addr(lines):
 		first_host = (net.network_address + 1).exploded.split(".")[-1]
 		last_host = (net.broadcast_address - 1).exploded.split(".")[-1]
 		network_bits = re.findall( r'[0-9]+\.[0-9]+\.[0-9]+\.', (net.broadcast_address - 1).exploded)[0]
-		print("          for i in {}..{} ;do (ping -c 1 {}$i | grep \"bytes from\" &) ;done".format(first_host, last_host, network_bits))
+		print("          for i in \{{}..{}} ;do (ping -c 1 {}$i | grep \"bytes from\" &) ;done".format(first_host, last_host, network_bits))
 
 
 def whoami(lines):
